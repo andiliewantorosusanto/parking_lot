@@ -7,11 +7,18 @@ import (
 
 type ParkingLot struct {
 	cars         map[int]Car
-	numberOfSpot int
+	numberOfSlot int
+}
+
+func NewParkingLot() *ParkingLot {
+	return &ParkingLot{
+		cars:         map[int]Car{},
+		numberOfSlot: 0,
+	}
 }
 
 func (p *ParkingLot) getNearestAvailableNumber() int {
-	for i := 1; i <= p.numberOfSpot; i++ {
+	for i := 1; i <= p.numberOfSlot; i++ {
 		if _, ok := p.cars[i]; !ok {
 			return i
 		}
@@ -20,23 +27,22 @@ func (p *ParkingLot) getNearestAvailableNumber() int {
 	return len(p.cars) + 1
 }
 
-func (p *ParkingLot) findCarByRegNumber(regNumber string) (*int, *Car) {
+func (p *ParkingLot) findReservedSlotByRegNumber(regNumber string) int {
 	for index, car := range p.cars {
 		if car.RegNumber == regNumber {
-			return &index, &car
+			return index
 		}
 	}
-
-	return nil, nil
+	return -1
 }
 
-func (p *ParkingLot) SetNumberOfLot(numberOfSlotRequestStr string) []byte {
+func (p *ParkingLot) SetNumberOfSlot(numberOfSlotRequestStr string) []byte {
 	numberOfSlotRequest, err := strconv.Atoi(numberOfSlotRequestStr)
 	if err != nil {
 		return []byte("Error converting string to int. please check your param")
 	}
 
-	if numberOfSlotRequest < p.numberOfSpot {
+	if numberOfSlotRequest < p.numberOfSlot {
 		return []byte("Cannot decrease number of slot. Loss of data may occur")
 	}
 
@@ -55,7 +61,7 @@ func (p *ParkingLot) Reserve(regNumber string, colour string) []byte {
 	return []byte("Allocated slot number: " + strconv.Itoa(lotNumber))
 }
 
-func (p *ParkingLot) Departure(slotNumberStr string) []byte {
+func (p *ParkingLot) Leave(slotNumberStr string) []byte {
 	slotNumber, err := strconv.Atoi(slotNumberStr)
 	if err != nil {
 		return []byte("Error converting string to int. please check your param")
@@ -70,8 +76,8 @@ func (p *ParkingLot) Status() []byte {
 	msg := "Slot No. Registration No Colour\n"
 
 	var parkingLotDetail []string
-	for i := 1; i <= numberOfSlot; i++ {
-		if car, ok := cars[i]; ok {
+	for i := 1; i <= p.numberOfSlot; i++ {
+		if car, ok := p.cars[i]; ok {
 			slotNumber := strconv.Itoa(i)
 			body := slotNumber + " " + car.RegNumber + " " + car.Colour
 			parkingLotDetail = append(parkingLotDetail, body)
@@ -81,4 +87,41 @@ func (p *ParkingLot) Status() []byte {
 	msg = msg + strings.Join(parkingLotDetail, "\n")
 
 	return []byte(msg)
+}
+
+func (p *ParkingLot) GetRegNumbersByColour(colour string) []byte {
+	var regNumbers []string
+
+	for i := 1; i <= p.numberOfSlot; i++ {
+		if car, ok := p.cars[i]; ok {
+			if car.Colour == colour {
+				regNumbers = append(regNumbers, car.RegNumber)
+			}
+		}
+	}
+
+	return []byte(strings.Join(regNumbers, ", "))
+}
+
+func (p *ParkingLot) GetReservedSlotsByColour(colour string) []byte {
+	var reservedSlots []string
+
+	for i := 1; i <= p.numberOfSlot; i++ {
+		if car, ok := p.cars[i]; ok {
+			if car.Colour == colour {
+				reservedSlots = append(reservedSlots, strconv.Itoa(i))
+			}
+		}
+	}
+
+	return []byte(strings.Join(reservedSlots, ", "))
+}
+
+func (p *ParkingLot) GetReservedSlotByRegNumber(regNumber string) []byte {
+	slotNumber := p.findReservedSlotByRegNumber(regNumber)
+	if slotNumber == -1 {
+		return []byte("Not found")
+	}
+
+	return []byte(strconv.Itoa(slotNumber))
 }

@@ -70,9 +70,6 @@ func handleResp(resp *http.Response, expectedPayload string) {
 		log.Fatalf("read body: %s\n", err)
 	}
 
-	log.Println(string(body))
-	log.Println(expectedPayload)
-
 	if string(body) != expectedPayload {
 		log.Fatalf("test failed!\n")
 	}

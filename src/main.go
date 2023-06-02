@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"gitlab.mapan.io/playground/parking-lot-golang/src/entity"
 	"net/http"
@@ -12,23 +11,45 @@ import (
 var cars = map[int]entity.Car{}
 var numberOfSlot = 0
 
-func createParkingLot(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-
-	numberOfSlotRequest, err := strconv.Atoi(params["numberOfSlot"])
+func assignNumberOfSlot(numberOfSlotRequestStr string) []byte {
+	numberOfSlotRequest, err := strconv.Atoi(numberOfSlotRequestStr)
 	if err != nil {
-		fmt.Println("Error converting string to int")
-		return
+		return []byte("Error converting string to int. please check your param")
 	}
 
 	if numberOfSlotRequest < numberOfSlot {
-		fmt.Println("Cannot decrease number of slot. Loss of data may occur")
-		return
+		return []byte("Cannot decrease number of slot. Loss of data may occur")
 	}
 
 	numberOfSlot = numberOfSlotRequest
+	return []byte("Created a parking lot with " + strconv.Itoa(numberOfSlot) + " slots")
+}
 
-	w.Write([]byte("Created a parking lot with " + params["numberOfSlot"] + " slots"))
+func reserveParkingLo(regNumber string, colour string) []byte {
+	if numberOfSlot <= len(cars) {
+		return []byte("Sorry, parking lot is full")
+	}
+
+	lotNumber := entity.GetNearestAvailableNumber(numberOfSlot, cars)
+	cars[lotNumber] = entity.Car{Colour: colour, RegNumber: regNumber}
+
+	return []byte("Allocated slot number: " + strconv.Itoa(lotNumber))
+}
+
+func createParkingLot(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	w.Write(assignNumberOfSlot(params["numberOfSlot"]))
+}
+
+func deleteCar(slotNumberStr string) []byte {
+	slotNumber, err := strconv.Atoi(slotNumberStr)
+	if err != nil {
+		return []byte("Error converting string to int. please check your param")
+	}
+
+	delete(cars, slotNumber)
+
+	return []byte("Slot number " + slotNumberStr + " is free")
 }
 
 func reserveParkingLot(w http.ResponseWriter, r *http.Request) {
@@ -36,28 +57,13 @@ func reserveParkingLot(w http.ResponseWriter, r *http.Request) {
 	regNumber := params["regNumber"]
 	colour := params["colour"]
 
-	if numberOfSlot <= len(cars) {
-		w.Write([]byte("Sorry, parking lot is full"))
-		return
-	}
-
-	lotNumber := entity.GetNearestAvailableNumber(numberOfSlot, cars)
-	cars[lotNumber] = entity.Car{Colour: colour, RegNumber: regNumber}
-
-	w.Write([]byte("Allocated slot number: " + strconv.Itoa(lotNumber)))
+	w.Write(reserveParkingLo(regNumber, colour))
 }
 
 func leaveParkingLot(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	slotNumber, err := strconv.Atoi(params["slotNumber"])
-	if err != nil {
-		fmt.Println("Error converting string to int")
-		return
-	}
-
-	delete(cars, slotNumber)
-	w.Write([]byte("Slot number " + params["slotNumber"] + " is free"))
+	w.Write(deleteCar(params["slotNumber"]))
 }
 
 func getParkingLotStatus(w http.ResponseWriter, r *http.Request) {

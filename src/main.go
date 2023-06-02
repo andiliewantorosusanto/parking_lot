@@ -3,38 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"gitlab.mapan.io/playground/parking-lot-golang/src/entity"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-type Car struct {
-	RegNumber string
-	Colour    string
-}
-
-var cars = map[int]Car{}
+var cars = map[int]entity.Car{}
 var numberOfSlot = 0
-
-func getNearestAvailableNumber() int {
-	for i := 1; i <= numberOfSlot; i++ {
-		if _, ok := cars[i]; !ok {
-			return i
-		}
-	}
-
-	return len(cars) + 1
-}
-
-func findCarByRegNumber(regNumber string) (*int, *Car) {
-	for index, car := range cars {
-		if car.RegNumber == regNumber {
-			return &index, &car
-		}
-	}
-
-	return nil, nil
-}
 
 func createParkingLot(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -65,8 +41,8 @@ func reserveParkingLot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lotNumber := getNearestAvailableNumber()
-	cars[lotNumber] = Car{Colour: colour, RegNumber: regNumber}
+	lotNumber := entity.GetNearestAvailableNumber(numberOfSlot, cars)
+	cars[lotNumber] = entity.Car{Colour: colour, RegNumber: regNumber}
 
 	w.Write([]byte("Allocated slot number: " + strconv.Itoa(lotNumber)))
 }
@@ -135,7 +111,7 @@ func getLotNumberByRegNumber(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	regNumber := params["regNumber"]
 
-	slotNumber, _ := findCarByRegNumber(regNumber)
+	slotNumber, _ := entity.FindCarByRegNumber(regNumber, cars)
 	if slotNumber == nil {
 		w.Write([]byte("Not found"))
 		return

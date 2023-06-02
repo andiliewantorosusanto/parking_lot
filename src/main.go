@@ -8,48 +8,9 @@ import (
 	"strings"
 )
 
-var cars = map[int]entity.Car{}
-var numberOfSlot = 0
-
-func assignNumberOfSlot(numberOfSlotRequestStr string) []byte {
-	numberOfSlotRequest, err := strconv.Atoi(numberOfSlotRequestStr)
-	if err != nil {
-		return []byte("Error converting string to int. please check your param")
-	}
-
-	if numberOfSlotRequest < numberOfSlot {
-		return []byte("Cannot decrease number of slot. Loss of data may occur")
-	}
-
-	numberOfSlot = numberOfSlotRequest
-	return []byte("Created a parking lot with " + strconv.Itoa(numberOfSlot) + " slots")
-}
-
-func reserveParkingLo(regNumber string, colour string) []byte {
-	if numberOfSlot <= len(cars) {
-		return []byte("Sorry, parking lot is full")
-	}
-
-	lotNumber := entity.GetNearestAvailableNumber(numberOfSlot, cars)
-	cars[lotNumber] = entity.Car{Colour: colour, RegNumber: regNumber}
-
-	return []byte("Allocated slot number: " + strconv.Itoa(lotNumber))
-}
-
 func createParkingLot(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	w.Write(assignNumberOfSlot(params["numberOfSlot"]))
-}
-
-func deleteCar(slotNumberStr string) []byte {
-	slotNumber, err := strconv.Atoi(slotNumberStr)
-	if err != nil {
-		return []byte("Error converting string to int. please check your param")
-	}
-
-	delete(cars, slotNumber)
-
-	return []byte("Slot number " + slotNumberStr + " is free")
 }
 
 func reserveParkingLot(w http.ResponseWriter, r *http.Request) {
@@ -66,19 +27,8 @@ func leaveParkingLot(w http.ResponseWriter, r *http.Request) {
 	w.Write(deleteCar(params["slotNumber"]))
 }
 
-func getParkingLotStatus(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Slot No. Registration No Colour\n"))
-
-	var parkingLotDetail []string
-	for i := 1; i <= numberOfSlot; i++ {
-		if car, ok := cars[i]; ok {
-			slotNumber := strconv.Itoa(i)
-			body := slotNumber + " " + car.RegNumber + " " + car.Colour
-			parkingLotDetail = append(parkingLotDetail, body)
-		}
-	}
-
-	w.Write([]byte(strings.Join(parkingLotDetail, "\n")))
+func getParkingLotStatus(w http.ResponseWriter, _ *http.Request) {
+	w.Write(getStatus())
 }
 
 func getCarsRegNumberByColour(w http.ResponseWriter, r *http.Request) {
@@ -130,9 +80,9 @@ func getLotNumberByRegNumber(w http.ResponseWriter, r *http.Request) {
 func main() {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/create_parking_lot/{numberOfSlot}", createParkingLot).Methods("POST")
+	r.HandleFunc("/create_parking_lot/{numberOfSpot}", createParkingLot).Methods("POST")
 	r.HandleFunc("/park/{regNumber}/{colour}", reserveParkingLot).Methods("POST")
-	r.HandleFunc("/leave/{slotNumber}", leaveParkingLot).Methods("POST")
+	r.HandleFunc("/leave/{spotNumber}", leaveParkingLot).Methods("POST")
 	r.HandleFunc("/status", getParkingLotStatus).Methods("GET")
 	r.HandleFunc("/cars_registration_numbers/colour/{colour}", getCarsRegNumberByColour).Methods("GET")
 	r.HandleFunc("/cars_slot/colour/{colour}", getReservedLotNumberByColour).Methods("GET")

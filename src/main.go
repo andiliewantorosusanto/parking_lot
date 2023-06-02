@@ -16,6 +16,7 @@ func main() {
 	r.HandleFunc("/cars_registration_numbers/colour/{colour}", handler.GetRegNumbersByColour).Methods("GET")
 	r.HandleFunc("/cars_slot/colour/{colour}", handler.GetReservedSlotsByColour).Methods("GET")
 	r.HandleFunc("/slot_number/car_registration_number/{regNumber}", handler.GetReservedSlotByRegNumber).Methods("GET")
+	r.HandleFunc("/bulk", handler.Bulk).Methods("POST")
 
 	err := http.ListenAndServe(":8080", r)
 

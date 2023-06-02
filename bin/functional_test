@@ -1,2 +1,2 @@
 go mod download
-go run src/test/functional_testing.go
+go run src/functional_testing.go

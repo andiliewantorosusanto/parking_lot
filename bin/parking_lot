@@ -1,2 +1,2 @@
 go mod download
-go run main.go
+go run src/main.go

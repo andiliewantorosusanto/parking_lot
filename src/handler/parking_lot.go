@@ -51,7 +51,7 @@ func GetReservedSlotsByColour(w http.ResponseWriter, r *http.Request) {
 func GetReservedSlotByRegNumber(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	regNumber := params["regNumber"]
-	w.Write(parkingLot.GetReservedSlotsByColour(regNumber))
+	w.Write(parkingLot.GetReservedSlotByRegNumber(regNumber))
 }
 
 func Bulk(w http.ResponseWriter, r *http.Request) {
